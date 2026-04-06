@@ -61,7 +61,7 @@ class WeeklyHours:
 
         if opening_hour <= self.now_time <= closing_hour:
             if self.now_time >= last_time:
-                print("near last order / closing")
+                print("nearly last order / closing")
             return True
         else:
             return False
