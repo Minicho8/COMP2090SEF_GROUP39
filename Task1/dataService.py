@@ -12,15 +12,14 @@ class CsvRestaurantRepository():
         file_lines = file.readlines()
         file.close()
         for each in file_lines:
-            x = each.strip().split(',')
-            id = int(x[0])
-            name = x[1]
-            location = x[2]
-            cuisines = x[5]
-            price_level = x[7]
-            rating = x[8]
-            dietary_tags = x[6]
-            weekly_hours = x[9]
+            id = int(each.strip().split(',')[0])
+            name = each.strip().split(',')[1]
+            location = each.strip().split(',')[2]
+            cuisines = each.strip().split(',')[5]
+            price_level = each.strip().split(',')[7]
+            rating = each.strip().split(',')[8]
+            dietary_tags = each.strip().split(',')[6]
+            weekly_hours = each.strip().split(',')[9]
 
             location = location.replace(';',',')
 
