@@ -66,9 +66,6 @@ class WeeklyHours:
         else:
             return False
 
-    
-    def opening(self):
-        self.hours[self.today_week]
 
 class Restaurant:
 # id,name,address,lat,lon,cuisines,price_level,dietary_tags,rating,hours,stu_discount,phone,wesite1,website, ,google_map
