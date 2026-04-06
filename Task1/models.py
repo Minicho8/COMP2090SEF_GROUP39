@@ -1,4 +1,4 @@
-import math
+import math,datetime
 
 class Location:
     def __init__(self, name, latitude, longitude):
@@ -40,6 +40,46 @@ class Campus:
         return self.locations.get(campus_name.upper())
 
 class WeeklyHours:
-    pass
+    def __init__(self,id):
+        self.name = id.name
+        self.hours = id.weekly_hours
+
+    def today_time(self):
+        self.today_week = int(datetime.datetime.now().strftime("%w"))
+        self.now_time = datetime.datetime.now().time()
+        print(self.today_week,self.now_time)
+
+    def restaurant_opening_hours(self):
+        a = self.hours[self.today_week].split('-')
+        opening_hour = datetime.datetime.strptime(a[0],"%H:%M").time()
+        closing_hour = datetime.datetime.strptime(a[1],"%H:%M").time()
+        today_date = datetime.datetime.now().date()
+        closing_datetime = datetime.datetime.combine(today_date, closing_hour)
+        last_time = (closing_datetime - datetime.timedelta(minutes=30)).time()
+        print(today_date,closing_datetime,last_time)
+        print(opening_hour,closing_hour)
+
+        if opening_hour <= self.now_time <= closing_hour:
+            if self.now_time >= last_time:
+                print("near last order / closing")
+            return True
+        else:
+            return False
+
+    
+    def opening(self):
+        self.hours[self.today_week]
+
 class Restaurant:
-    pass
+# id,name,address,lat,lon,cuisines,price_level,dietary_tags,rating,hours,stu_discount,phone,wesite1,website, ,google_map
+
+    def __init__(self, id, name, location, cuisines, price_level, rating, dietary_tags, weekly_hours):
+        self.id = id
+        self.name = name
+        self.location = location
+        self.cuisines = cuisines
+        self.price_level = price_level
+        self.rating = rating
+        self.dietary_tags = dietary_tags
+        self.weekly_hours = weekly_hours
+
