@@ -1,6 +1,9 @@
-import search as s
+import search 
+from models import Restaurant as r
 
 class CsvRestaurantRepository:
     pass
+
 class SearchService:
-    pass
+    def searchRestaurants(self, criteria):
+        pass
