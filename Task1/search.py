@@ -1,3 +1,4 @@
+
 class SearchCriteria:
     def __init__(self, query):
         self.query = query
@@ -7,6 +8,8 @@ class SearchCriteria:
         self.min_rating = None # Minimum rating (min_rating)
         self.dietary_tag = None # Dietary restriction tag (dietary_tag)
         self.open_time = None # Opening time filter (open_time)
+    def update(self): #get the search criteria from user input
+        pass
         
 class SearchResult:
     def __init__(self, title, url):

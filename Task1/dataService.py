@@ -1,42 +1,66 @@
+import os
+import csv
 import search 
-from models import Restaurant as r
+from models import Restaurant as r, WeeklyHours as w
+
+class RestaurantNode:
+    def __init__(self, restaurant_obj):
+        self.restaurant = restaurant_obj
+        self.next = None
 
 class CsvRestaurantRepository():
 # id,name,address,lat,lon,cuisines,price_level,dietary_tags,rating,hours,stu_discount,phone,wesite1,website, ,google_map
 
     def __init__(self):
-        self.restaurant_list = []
+        self.head = None
+        self.tail = None
 
     def read_file(self):
-        file = open('restaurants.csv','r', encoding='utf-8')
-        file_lines = file.readlines()
-        file.close()
-        for each in file_lines:
-            id = int(each.strip().split(',')[0])
-            name = each.strip().split(',')[1]
-            location = each.strip().split(',')[2]
-            cuisines = each.strip().split(',')[5]
-            price_level = each.strip().split(',')[7]
-            rating = each.strip().split(',')[8]
-            dietary_tags = each.strip().split(',')[6]
-            weekly_hours = each.strip().split(',')[9]
+        # Build an absolute path to the CSV file based on this script's location
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        csv_path = os.path.join(base_dir, 'restaurants.csv')
+        
+        with open(csv_path, 'r', encoding='utf-8') as file:
+            reader = csv.reader(file)
+            for row in reader:
+                if not row or not row[0].isdigit(): # For skip empty lines
+                    continue 
+                
+                id = int(row[0])
+                name = row[1]
+                location = row[2]
+                lat = float(row[3]) if row[3] else 0.0
+                lon = float(row[4]) if row[4] else 0.0
+                cuisines = row[5]
+                dietary_tags = row[7]
+                price_level = 0 if row[6] == '/' else row[6]
+                rating = 0 if row[8] == '/' else row[8]
+                weekly_hours = row[9]
+                stu_discount = row[10]
+                phone = row[11]
+                website = row[12]
+                google_map = row[13]
 
-            location = location.replace(';',',')
+                print(row)
+                print(weekly_hours)
+                
+                obj_weekly_hours = w.parse_hours(weekly_hours)
 
-            weekly_hours = weekly_hours.replace('hours = ','').replace('"""','').split(';')
+                restaurant_obj = r(id=id, name=name, location=location, lat=lat, lon=lon, cuisines=cuisines, price_level=price_level, rating=rating, dietary_tags=dietary_tags, weekly_hours=obj_weekly_hours, stu_discount=stu_discount, phone=phone, website=website, google_map=google_map)
+                new_node = RestaurantNode(restaurant_obj)
 
-            
-            for i in range(len(weekly_hours)):
-                weekly_hours[i] = weekly_hours[i][4:]
+                if not self.head:
+                    self.head = new_node
+                    self.tail = new_node
+                else:
+                    self.tail.next = new_node
+                    self.tail = new_node
 
-                if "/" in weekly_hours[i]:
-                    weekly_hours[i] = weekly_hours[i].split('/')
-
-
-            restaurant_obj = r(id, name, location, cuisines, price_level, rating, dietary_tags, weekly_hours)
-
-            self.restaurant_list.append(restaurant_obj)
-
+    def get_all_restaurants(self):
+        current = self.head
+        while current:
+            yield current.restaurant
+            current = current.next
     
 
 class SearchService:
