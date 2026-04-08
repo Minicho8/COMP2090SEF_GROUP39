@@ -1,5 +1,5 @@
 def radix_sort(alist):
-    offset = abs(min(alist)) if min(alist) < 0 else 0   #shift all the value of the list by the min number's value to solve the nagative number
+    offset = abs(min(alist)) if min(alist) < 0 else 0   #shift all the value of the list by the min number's value to solve the negative number
     alist = [ num + offset for num in alist]
     max_digit = len(str(max(alist)))
 
