@@ -13,8 +13,9 @@ def radix_sort(alist):
         alist = []                                  # push the sorted number back to the list
         for num in bucket:
             alist.extend(num)
-
-    return [ num - offset for num in alist]                 #shifting all the value of the list back to original values
+    alist = [ num - offset for num in alist]                 #shifting all the value of the list back to original values
+    
+    return alist
 
 
 test_num = [1556,4,-3556,593,408,4386,902,7,8157,-86,9637,29]
