@@ -1,175 +1,488 @@
-from models import Campus,WeeklyHours as w
-
-import tkinter as ts
+from models import Campus, EstimatedWalkingtime, WeeklyHours as w
+import search
+import os
+import math
+import webbrowser
+import tkinter as tk
 import tkintermapview
+from PIL import Image, ImageTk
 
 c = Campus()
 
+class HomeView(tk.Frame):
+    def __init__(self, parent, repo, nav_main):
+        super().__init__(parent)
+        self.repo = repo #
+        self.nav_main = nav_main
+        self.criteria = search.SearchCriteria() # Initialize the SearchCriteria object here
+        self._build_ui()
 
-def build_main_view(root, repo):
+    def _build_ui(self):
+        bg_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "background.png")
+        self.original_bg_image = Image.open(bg_path)
+        self.bg_label = tk.Label(self)
+        self.bg_label.place(x=0, y=0, relwidth=1, relheight=1)
 
-    # Create the main container frame
-    main_frame = ts.Frame(root, padx=20, pady=20)
-    main_frame.pack(fill=ts.BOTH, expand=True)
+        self.bind("<Configure>", self._resize_image)
 
-    # Add a top label (Header) with left button and right dropdown
-    header_frame = ts.Frame(main_frame)
-    header_frame.pack(fill=ts.X, pady=(0, 20))
+        # Center overlay card frame to make UI stand out from map
+        self.card_frame = tk.Frame(self, bg="#ffffff", bd=0, highlightbackground="#cccccc", highlightthickness=1)
+        self.card_frame.place(relx=0.5, rely=0.5, anchor="center")
 
-    left_btn = ts.Button(header_frame, text="Menu", bg="#2196F3", fg="white")
-    left_btn.pack(side=ts.LEFT)
+        title_label = tk.Label(self.card_frame, text="Welcome to Restaurant Search", font=("Segoe UI", 24, "bold"), fg="#333333", bg="#ffffff")
+        title_label.pack(pady=(40, 30), padx=40)
 
-    lbl_title = ts.Label(header_frame, text="Restaurant Search Suggestion System", font=("Helvetica", 18, "bold"))
-    lbl_title.pack(side=ts.LEFT, expand=True)
+        # Campus selection section (shown first)
+        self.campus_selection_frame = tk.Frame(self.card_frame, bg="#ffffff")
+        self.campus_selection_frame.pack(pady=(0, 40), padx=40)
+        
+        tk.Label(self.campus_selection_frame, text="Select your current campus location:", font=("Segoe UI", 12), bg="#ffffff", fg="#333333").pack(pady=(0, 10))
+        
+        self.campus_var = tk.StringVar(value="Select Campus")
+        campus_options = ["MC", "IOH", "JCC", "HMT_PLAZA"]
+        
+        # Style the dropdown slightly
+        dropdown = tk.OptionMenu(self.campus_selection_frame, self.campus_var, *campus_options)
+        dropdown.config(font=("Segoe UI", 11), bg="#f9f9f9", width=20, bd=1, relief="solid", activebackground="#eeeeee")
+        dropdown.pack(pady=(0, 20))
+        
+        
 
-    dropdown_var = ts.StringVar(value="Settings")
-    dropdown_menu = ts.OptionMenu(header_frame, dropdown_var, "Profile", "Preferences", "Logout")
-    dropdown_menu.config(bg="#f1f1f1")
-    dropdown_menu.pack(side=ts.RIGHT)
+        btn_confirm_campus = tk.Button(self.campus_selection_frame, text="Confirm", font=("Segoe UI", 12, "bold"), bg="#27ae60", fg="white", activebackground="#219150", activeforeground="white", bd=0, cursor="hand2", width=15, command=self._confirm_campus)
+        btn_confirm_campus.pack()
+        
+        # Primary navigation buttons (created but NOT packed yet)
+        self.btn_search = tk.Button(self.card_frame, text="Search for Restaurants", font=("Segoe UI", 13, "bold"), width=25, height=2, bg="#0066cc", fg="white", activebackground="#004080", activeforeground="white", bd=0, cursor="hand2", command=self.show_search_criteria)
+        self.btn_all = tk.Button(self.card_frame, text="Show All Restaurants", font=("Segoe UI", 13, "bold"), width=25, height=2, bg="#f39c12", fg="white", activebackground="#e67e22", activeforeground="white", bd=0, cursor="hand2", command=lambda: self.nav_main(self.criteria))
+        
+        # Back button to return to campus selection
+        self.btn_back_to_campus = tk.Button(self.card_frame, text="⬅ Back to Campus Selection", font=("Segoe UI", 11), bg="#ffffff", fg="#c0392b", activebackground="#f9f9f9", activeforeground="#a53125", bd=0, cursor="hand2", command=self.back_to_campus)
 
-    # Create a PanedWindow or two side-by-side frames
-    content_frame = ts.Frame(main_frame)
-    content_frame.pack(fill=ts.BOTH, expand=True)
+    def _confirm_campus(self):
+        if self.campus_var.get() and self.campus_var.get() != "Select Campus":
+            # Update the instance created in __init__
+            self.criteria.update(campus=self.campus_var.get())
+            campus_val = self.criteria.get_all()['campus'] # Get the value by calling the method
+            print(campus_val)
+            # Check for dynamic backgrounds if intended:
+            # if campus_val == 'MC':
+            #     bg_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "backgroundMC.png")
+            bg_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), f"background{campus_val}.png")
+            try:
+                self.original_bg_image = Image.open(bg_path)
+                # Force a resize event to apply the new image immediately
+                e = tk.Event()
+                e.widget = self
+                e.width = self.winfo_width()
+                e.height = self.winfo_height()
+                self._resize_image(e) 
+            except Exception as e:
+                pass
+            
+            # Hide the selection section
+            self.campus_selection_frame.pack_forget()
+            # Show the primary navigation buttons
+            self.btn_search.pack(pady=(0, 15), padx=40)
+            self.btn_all.pack(pady=(0, 15), padx=40)
+            self.btn_back_to_campus.pack(pady=(0, 40), padx=40)
 
-    left_frame = ts.Frame(content_frame)
-    left_frame.pack(side=ts.LEFT, fill=ts.BOTH, expand=True, padx=(0, 10))
+    def back_to_campus(self):
+        # Hide primary buttons
+        self.btn_search.pack_forget()
+        self.btn_all.pack_forget()
+        self.btn_back_to_campus.pack_forget()
 
-    right_frame = ts.Frame(content_frame)
-    right_frame.pack(side=ts.RIGHT, fill=ts.BOTH, expand=True)
+        # Reset background back to original default
+        bg_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "background.png")
+        try:
+            self.original_bg_image = Image.open(bg_path)
+            e = tk.Event()
+            e.widget = self
+            e.width = self.winfo_width()
+            e.height = self.winfo_height()
+            self._resize_image(e) 
+        except Exception as e:
+            pass
 
-    # Search section
-    search_frame = ts.Frame(left_frame)
-    search_frame.pack(fill=ts.X)
-    ts.Label(search_frame, text="Keyword:").pack(side=ts.LEFT, padx=(0,10))
+        # Show campus selection panel again
+        self.campus_selection_frame.pack(pady=(0, 40), padx=40)
 
-    search_var = ts.StringVar()
-    search_entry = ts.Entry(search_frame, textvariable=search_var, width=30)
-    search_entry.pack(side=ts.LEFT, padx=(0,10))
+    def _resize_image(self, event):
+        # We only want to resize if the container frame itself triggered the event
+        if event.widget == self and event.width > 50 and event.height > 50:
+            resized_image = self.original_bg_image.resize((event.width, event.height), Image.Resampling.LANCZOS)
+            self.bg_image = ImageTk.PhotoImage(resized_image)
+            self.bg_label.config(image=self.bg_image)
 
-    # Remaining views - Create a Results Listbox
-    results_frame = ts.Frame(left_frame)
-    results_frame.pack(fill=ts.BOTH, expand=True, pady=20)
+    def show_search_criteria(self):
+        
+        self.btn_search.pack_forget()
+        self.btn_all.pack_forget()
+        self.btn_back_to_campus.pack_forget()
 
-    scrollbar = ts.Scrollbar(results_frame)
-    scrollbar.pack(side=ts.RIGHT, fill=ts.Y)
+        self.criteria_frame = tk.Frame(self.card_frame, bg="#ffffff")
+        self.criteria_frame.pack(pady=(0, 40), padx=40)
+
+        tk.Label(self.criteria_frame, text="Keyword:", font=("Segoe UI", 12), bg="#ffffff", fg="#333333").grid(row=0, column=0, padx=10, pady=10, sticky="e")
+        query_var = tk.StringVar()
+        tk.Entry(self.criteria_frame, textvariable=query_var, font=("Segoe UI", 12), bg="#f9f9f9", relief="solid", bd=1).grid(row=0, column=1, padx=10, pady=10)
+
+        tk.Label(self.criteria_frame, text="Cuisine:", font=("Segoe UI", 12), bg="#ffffff", fg="#333333").grid(row=1, column=0, padx=10, pady=10, sticky="e")
+        cuisine_var = tk.StringVar()
+        tk.Entry(self.criteria_frame, textvariable=cuisine_var, font=("Segoe UI", 12), bg="#f9f9f9", relief="solid", bd=1).grid(row=1, column=1, padx=10, pady=10)
+        
+        tk.Label(self.criteria_frame, text="Max Price Level (1-3):", font=("Segoe UI", 12), bg="#ffffff", fg="#333333").grid(row=2, column=0, padx=10, pady=10, sticky="e")
+        price_var = tk.StringVar()
+        tk.Entry(self.criteria_frame, textvariable=price_var, font=("Segoe UI", 12), bg="#f9f9f9", relief="solid", bd=1).grid(row=2, column=1, padx=10, pady=10)
+
+        def search():
+            self.nav_main(self.criteria) # Pass the criteria when searching
+            
+        tk.Button(self.criteria_frame, text="Start Search", bg="#27ae60", fg="white", activebackground="#219150", activeforeground="white", bd=0, cursor="hand2", font=("Segoe UI", 12, "bold"), width=15, command=search).grid(row=3, column=0, columnspan=2, pady=(20, 10))
+        
+        tk.Button(self.criteria_frame, text="Cancel", bg="#c0392b", fg="white", activebackground="#a53125", activeforeground="white", bd=0, cursor="hand2", font=("Segoe UI", 11), width=10, command=lambda: [self.criteria_frame.destroy(), self.btn_search.pack(pady=(0, 15), padx=40), self.btn_all.pack(pady=(0, 15), padx=40), self.btn_back_to_campus.pack(pady=(0, 40), padx=40)]).grid(row=4, column=0, columnspan=2)
+
+
     
-    listbox = ts.Listbox(results_frame, yscrollcommand=scrollbar.set, font=("Helvetica", 11))
-    listbox.pack(side=ts.LEFT, fill=ts.BOTH, expand=True)
-    scrollbar.config(command=listbox.yview)
+class MainView(tk.Frame):
+    def __init__(self, parent, repo, nav_home, criteria=None):
+        super().__init__(parent)
+        self.repo = repo #
+        self.nav_home = nav_home
+        self.criteria = criteria
 
-    # TkinterMapView and Info Card on the right frame
-    info_frame = ts.Frame(right_frame, bg="#e8e8e8", bd=2, relief=ts.GROOVE)
-    info_frame.pack(fill=ts.X, pady=(0, 10))
+        self.displayed_restaurants = []
 
-    info_var = ts.StringVar()
-    info_var.set("Select a restaurant from the list to view its information.")
+        self.search_var = tk.StringVar()
+        self.dropdown_var = tk.StringVar(value="Settings")
 
-    def cancel_selection():
-        listbox.selection_clear(0, ts.END)
-        reload_map()
-        info_var.set("Select a restaurant from the list to view its information.")
+        self._build_ui()
+        
+    def _build_ui(self):
+        # Add a top label (Header) with left button and right dropdown
+        header_frame = tk.Frame(self)
+        header_frame.pack(fill=tk.X, pady=(0, 20))
 
-    info_header_frame = ts.Frame(info_frame, bg="#e8e8e8")
-    info_header_frame.pack(fill=ts.X, padx=5, pady=(5,0))
+        left_btn = tk.Button(header_frame, text="Menu", bg="#2196F3", fg="white")
+        left_btn.pack(side=tk.LEFT)
 
-    ts.Label(info_header_frame, text="Restaurant Details", font=("Helvetica", 12, "bold"), bg="#e8e8e8").pack(side=ts.LEFT)
-    
-    deselect_btn = ts.Button(info_header_frame, text="✖ Deselect", command=cancel_selection, bg="white", activebackground="#f0f0f0", relief=ts.RAISED, bd=1)
-    deselect_btn.pack(side=ts.RIGHT)
+        lbl_title = tk.Label(header_frame, text="Restaurant Search Suggestion System", font=("Helvetica", 18, "bold"))
+        lbl_title.pack(side=tk.LEFT, expand=True)
 
-    info_label = ts.Label(info_frame, textvariable=info_var, justify=ts.LEFT, anchor=ts.W, font=("Helvetica", 10), bg="#e8e8e8")
-    info_label.pack(fill=ts.X, padx=5, pady=5)
+        dropdown_menu = tk.OptionMenu(header_frame, self.dropdown_var, "Profile", "Preferences", "Logout") #TODO
+        dropdown_menu.config(bg="#f1f1f1")
+        dropdown_menu.pack(side=tk.RIGHT)
 
-    map_widget = tkintermapview.TkinterMapView(right_frame, width=400, height=400, corner_radius=0)
-    map_widget.set_tile_server("https://mt0.google.com/vt/lyrs=m&hl=en&x={x}&y={y}&z={z}&s=Ga", max_zoom=22)
-    map_widget.pack(fill=ts.BOTH, expand=True)
+        # Create a PanedWindow or two side-by-side frames
+        content_frame = tk.Frame(self)
+        content_frame.pack(fill=tk.BOTH, expand=True)
 
-    # Default to HKMU Ho Man Tin Campuses, adjust zoom
-    o_lat = c.get_campus("MC").lat + c.get_campus("IOH").lat + c.get_campus("JCC").lat + c.get_campus("HMT_PLAZA").lat
-    o_lon = c.get_campus("MC").lon + c.get_campus("IOH").lon + c.get_campus("JCC").lon + c.get_campus("HMT_PLAZA").lon
-    map_widget.set_position(o_lat / 4, o_lon / 4)
-    map_widget.set_zoom(17)
-    
+        # Configure columns to have equal width by using the same "uniform" group
+        content_frame.columnconfigure(0, weight=1,uniform='half')
+        content_frame.columnconfigure(1, weight=1,uniform='half')
+        content_frame.rowconfigure(0, weight=1)
+
+        left_frame = tk.Frame(content_frame)
+        left_frame.grid(row=0, column=0, sticky="nsew", padx=(0, 10))
+
+        right_frame = tk.Frame(content_frame)
+        right_frame.grid(row=0, column=1, sticky="nsew")
+        
+        # Search section
+        search_frame = tk.Frame(left_frame)
+        search_frame.pack(fill=tk.X)
+        tk.Label(search_frame, text="Keyword:").pack(side=tk.LEFT, padx=(0,10))
+
+        search_entry = tk.Entry(search_frame, textvariable=self.search_var, width=30)
+        search_entry.pack(side=tk.LEFT, padx=(0,10))
+
+        # Remaining views - Create a Results Listbox with modernized styling
+        results_frame = tk.Frame(left_frame, bg="#ffffff", bd=1, relief="solid")
+        results_frame.pack(fill=tk.BOTH, expand=True, pady=20)
+        
+        # Header for the listbox
+        list_header_frame = tk.Frame(results_frame, bg="#f1f1f1")
+        list_header_frame.pack(fill=tk.X)
+        tk.Label(list_header_frame, text="Search Results", font=("Segoe UI", 11, "bold"), bg="#f1f1f1", fg="#333333").pack(side=tk.LEFT, padx=10, pady=8)
+
+        scrollbar = tk.Scrollbar(results_frame)
+        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        
+        
+        self.listbox = tk.Listbox(
+            results_frame, 
+            yscrollcommand=scrollbar.set, 
+            font=("Segoe UI", 12),
+            bg="#ffffff",
+            fg="#333333",
+            selectbackground="#0066cc",
+            selectforeground="#ffffff",
+            activestyle="none", # removes the dotted line around the selected item
+            highlightthickness=0,
+            bd=0,
+            relief="flat"
+        )
+        '''
+        self.listbox = tk.Text(
+            results_frame, 
+            yscrollcommand=scrollbar.set, 
+            font=("Segoe UI", 12),
+            bg="#ffffff",
+            fg="#333333",
+            padx=10,
+            pady=10,
+            wrap="word",         # Enable word-based wrapping
+            cursor="arrow",      # Make it look like a regular list
+            state="disabled",    # Prevent user typing
+            highlightthickness=0,
+            bd=0
+        )
+        '''
+        self.listbox.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=2, pady=2)
+        scrollbar.config(command=self.listbox.yview)
+
+        # TkinterMapView and Info Card on the right frame
+        info_frame = tk.Frame(right_frame, bg="#ffffff", bd=1, relief="solid")
+        info_frame.pack(fill=tk.X, pady=(0, 10))
+
+        info_header_frame = tk.Frame(info_frame, bg="#f1f1f1")
+        info_header_frame.pack(fill=tk.X)
+
+        tk.Label(info_header_frame, text="Restaurant Details", font=("Segoe UI", 12, "bold"), bg="#f1f1f1", fg="#333333").pack(side=tk.LEFT, padx=10, pady=8)
+        
+        deselect_btn = tk.Button(info_header_frame, text="✖ Deselect", command=self.cancel_selection, bg="#e0e0e0", activebackground="#cccccc", relief="flat", bd=0, cursor="hand2", padx=8, pady=2)
+        deselect_btn.pack(side=tk.RIGHT, padx=10, pady=8)
+
+        # Better detailed layout
+        self.details_frame = tk.Frame(info_frame, bg="#ffffff")
+        self.details_frame.pack(fill=tk.BOTH, padx=15, pady=10)
+        
+        # Name
+        self.lbl_r_name = tk.Label(self.details_frame, text="Select a restaurant from the list to view its information.", font=("Segoe UI", 16, "bold"), bg="#ffffff", fg="#0066cc", anchor="w")
+        self.lbl_r_name.pack(fill=tk.X, pady=(0, 2))
+
+        # Distance and Walking Time
+        self.lbl_r_dist = tk.Label(self.details_frame, text="", font=("Segoe UI", 9, "italic"), bg="#ffffff", fg="#888888", anchor="w", justify="left")
+        self.lbl_r_dist.pack(fill=tk.X, pady=(2, 0))
+
+        
+        
+        
+        
+        # Horizontal layout for stats (Type badge, Price, Rating, Tags)
+        self.stats_frame = tk.Frame(self.details_frame, bg="#ffffff")
+        self.stats_frame.pack(fill=tk.X, pady=(10, 5))
+        
+        # Badge style for cuisine
+        self.lbl_r_cuisine = tk.Label(self.stats_frame, text="", font=("Segoe UI", 10, "bold"), bg="#e1f5fe", fg="#0066cc", padx=8, pady=2)
+        
+        # Price and Rating
+        self.lbl_r_price = tk.Label(self.stats_frame, text="", font=("Segoe UI", 11, "bold"), bg="#ffffff", fg="#27ae60")
+        self.lbl_r_rating = tk.Label(self.stats_frame, text="", font=("Segoe UI", 11), bg="#ffffff", fg="#f39c12")
+        
+        # Dietary tags
+        self.lbl_r_diet = tk.Label(self.stats_frame, text="", font=("Segoe UI", 9), bg="#f5f5f5", fg="#666666", padx=5, pady=2)
+
+        # Address
+        self.address_frame = tk.Frame(self.details_frame, bg="#ffffff")
+
+        lbl_addr_title = tk.Label(self.address_frame, text="Address:", font=("Segoe UI", 10, "bold"), bg="#ffffff", fg="#333333", anchor="nw")
+        lbl_addr_title.grid(row=0, column=0, sticky="nw", padx=(0, 10))
+
+        self.lbl_r_addr = tk.Label(self.address_frame, text="", font=("Consolas", 10), bg="#ffffff", fg="#000000", anchor="nw", justify=tk.LEFT, wraplength=350)
+        self.lbl_r_addr.grid(row=0, column=1, sticky="nw")
+
+        # Hours area (Using a frame to align title and time text nicely)
+        self.hours_frame = tk.Frame(self.details_frame, bg="#ffffff")
+        
+        lbl_hours_title = tk.Label(self.hours_frame, text="Opening Hours:", font=("Segoe UI", 10, "bold"), bg="#ffffff", fg="#333333", anchor="nw")
+        lbl_hours_title.grid(row=0, column=0, sticky="nw", padx=(0, 10))
+        
+        self.lbl_r_hours = tk.Label(self.hours_frame, text="", font=("Consolas", 10), bg="#ffffff", fg="#444444", anchor="nw", justify=tk.LEFT)
+        self.lbl_r_hours.grid(row=0, column=1, sticky="nw")
+
+        self.map_widget = tkintermapview.TkinterMapView(right_frame, width=400, height=400, corner_radius=0)
+        self.map_widget.set_tile_server("https://mt0.google.com/vt/lyrs=m&hl=en&x={x}&y={y}&z={z}&s=Ga", max_zoom=22)
+        self.map_widget.pack(fill=tk.BOTH, expand=True)
+
+        # Default to HKMU Ho Man Tin Campuses, adjust zoom
+        o_lat = c.get_campus("MC").lat + c.get_campus("IOH").lat + c.get_campus("JCC").lat + c.get_campus("HMT_PLAZA").lat
+        o_lon = c.get_campus("MC").lon + c.get_campus("IOH").lon + c.get_campus("JCC").lon + c.get_campus("HMT_PLAZA").lon
+        self.map_widget.set_position(o_lat / 4, o_lon / 4)
+        self.map_widget.set_zoom(17)
+
+        # Create Reload Button and place it hovering on the top right
+        reload_btn = tk.Button(self.map_widget, text="↻ Reload Map", command=self.reload_map, bg="white", activebackground="#f0f0f0", relief=tk.RAISED, bd=1)
+        reload_btn.place(relx=1.0, anchor=tk.NE, x=-10, y=10)
+
+        # Navigation Button for Google Maps (Hidden by default until a restaurant is selected)
+        self.btn_nav_google = tk.Button(self.map_widget, text="Navigate in Google Maps", bg="#4CAF50", fg="white", activebackground="#45a049", activeforeground="white", font=("Segoe UI", 11, "bold"), relief="flat", bd=0, cursor="hand2")
+        # Initialize an attribute to hold the current selected restaurant's url
+        self.current_google_map_url = ""
+                
+        self.btn_nav_google.config(command=self.open_google_maps)
+
+        self.listbox.bind("<<ListboxSelect>>", self.on_restaurant_select)
+        self.listbox.bind()
+        self.listbox.bind("<Up>", self.block_event)
+        self.listbox.bind("<Down>", self.block_event)
+
+        tk.Button(search_frame, text="Search", command=self.perform_search, bg="#4CAF50", fg="white").pack(side=tk.LEFT)
+
+        # Populate the list initially
+        self.perform_search()
+
+    def open_google_maps(self):
+        if self.current_google_map_url:
+            webbrowser.open(self.current_google_map_url)
+
+    def cancel_selection(self):
+        self.listbox.selection_clear(0, tk.END)
+        self.reload_map()
+        
+        # Reset labels
+        self.lbl_r_name.config(text="Select a restaurant from the list to view its information.")
+        self.lbl_r_addr.config(text="")
+        self.current_google_map_url = ""
+        
+        # Hide dynamic blocks
+        self.lbl_r_cuisine.pack_forget()
+        self.lbl_r_price.pack_forget()
+        self.lbl_r_rating.pack_forget()
+        self.lbl_r_diet.pack_forget()
+        self.hours_frame.pack_forget()
+        self.btn_nav_google.place_forget()
+
     # Reload Map Function
-    def reload_map():
-        selected_indices = listbox.curselection()
-        if selected_indices and selected_indices[0] < len(displayed_restaurants):
+    def reload_map(self):
+        selected_indices = self.listbox.curselection()
+        if selected_indices and selected_indices[0] < len(self.displayed_restaurants):
             # A restaurant is currently selected, center map on it instead of resetting everything
-            r = displayed_restaurants[selected_indices[0]]
-            map_widget.delete_all_marker()
-            map_widget.set_position(r.lat, r.lon)
-            map_widget.set_zoom(17)
-            map_widget.set_marker(r.lat, r.lon, text=r.name)
+            r = self.displayed_restaurants[selected_indices[0]]
+            self.map_widget.delete_all_marker()
+            self.map_widget.set_position(r.location.lat, r.location.lon)
+            self.map_widget.set_zoom(17)
+            self.map_widget.set_marker(r.location.lat, r.location.lon, text=r.name)
         else:
             # No restaurant selected, do a full map reset to default coordinates
-            map_widget.delete_all_marker()
+            self.map_widget.delete_all_marker()
             o_lat = c.get_campus("MC").lat + c.get_campus("IOH").lat + c.get_campus("JCC").lat + c.get_campus("HMT_PLAZA").lat
             o_lon = c.get_campus("MC").lon + c.get_campus("IOH").lon + c.get_campus("JCC").lon + c.get_campus("HMT_PLAZA").lon
-            map_widget.set_position(o_lat / 4, o_lon / 4)
-            map_widget.set_zoom(17)
-
-    # Create Reload Button and place it hovering on the top right
-    reload_btn = ts.Button(map_widget, text="↻ Reload Map", command=reload_map, bg="white", activebackground="#f0f0f0", relief=ts.RAISED, bd=1)
-    reload_btn.place(relx=1.0, anchor=ts.NE, x=-10, y=10)
-
-    displayed_restaurants = []
+            print(o_lat, o_lon)
+            self.map_widget.set_position(o_lat / 4, o_lon / 4)
+            self.map_widget.set_zoom(17)
 
     # Define the search function
-    def perform_search():
-        listbox.delete(0, ts.END)
-        displayed_restaurants.clear()
+    def perform_search(self):
+        self.listbox.delete(0, tk.END)
+        self.displayed_restaurants.clear()
         
-        query = search_var.get().lower()
+        query = self.search_var.get().lower()
         results_found = False
         
-        for r in repo.get_all_restaurants():
+        for idx, r in enumerate(self.repo.get_all_restaurants()):
             match = query in r.name.lower() or query in r.cuisines.lower()
             if query == "" or match:
-                listbox.insert(ts.END, f"{r.name} - {r.cuisines} (rating {r.rating})")
-                displayed_restaurants.append(r)
+                print('idx:',idx,r.location)
+                # Add dynamic visual indicators like emoji or clean formatting
+                rating_str = '★' * int(r.rating) if r.rating else 'No Rating'
+                current_campus_code = self.criteria.get_all().get('campus')
+                campus_loc = c.get_campus(current_campus_code)
+                display_text = f"{idx}  🍽️ {r.name}  |  {r.cuisines.upper()}  |  {rating_str}  ~  {r.location.distance_km_from(campus_loc)}"
+                print("~"*10)
+                self.listbox.insert(tk.END, display_text)
+                
+                # Alternate row colors for better readability
+                bg_color = "#ffffff" if idx % 2 == 0 else "#f9f9f9"
+                self.listbox.itemconfig(tk.END, {'bg': bg_color})
+                
+                self.displayed_restaurants.append(r)
                 results_found = True
                 
         if not results_found:
-            listbox.insert(ts.END, "No matching restaurants found for your query.")
-
-    def on_restaurant_select(event):
+            self.listbox.insert(tk.END, "  🔍 No matching restaurants found for your query.")
+            self.listbox.itemconfig(tk.END, {'fg': '#888888', 'font': ("Segoe UI", 11, "italic")})
+    def on_restaurant_select(self,event):
         # Find which item is clicked
-        selected_indices = listbox.curselection()
+        selected_indices = self.listbox.curselection()
         if not selected_indices:
             return
             
         index = selected_indices[0]
         # Make sure don't crash if they click the "No matching..." text
-        if index < len(displayed_restaurants):
-            r = displayed_restaurants[index]
-            lat = r.lat
-            lon = r.lon
+        if index < len(self.displayed_restaurants):
+            r = self.displayed_restaurants[index]
+            lat = r.location.lat
+            lon = r.location.lon
             # Place map marker
-            map_widget.delete_all_marker()
-            map_widget.set_position(lat, lon)
-            map_widget.set_zoom(17)
-            map_widget.set_marker(lat, lon, text=r.name)
+            self.map_widget.delete_all_marker()
+            self.map_widget.set_position(lat, lon)
+            self.map_widget.set_zoom(17)
+            self.map_widget.set_marker(lat, lon, text=r.name)
 
-            # Update info card
-            details_text = (
-                f"Name: {r.name}\n"
-                f"Address/Location: {r.location}\n"
-                f"Cuisine: {r.cuisines}\n"
-                f"Dietary Tags: {r.dietary_tags}\n"
-                f"Price Level: {int(r.price_level) * '$'+ (3 - int(r.price_level)) * ' ·'} | Rating: {int(r.rating) * '★ ' + (5 - int(r.rating)) * '☆ '}\n"
-                f"Opening Hours: {w.textformat(r.weekly_hours)}\n"
-            )
-            info_var.set(details_text)
+            # Update info card with structured layout
+            self.lbl_r_name.config(text=r.name)
+            
+            
+            # Distance and Walk Time calculation
+            current_campus_code = self.criteria.get_all().get('campus')
+            if current_campus_code:
+                campus_loc = c.get_campus(current_campus_code)
+                dist_km = r.location.distance_km_from(campus_loc)
+                
+                print(current_campus_code,dist_km)
+                print("~"*10)
+                if dist_km >= 1:
+                    dist_text = (str(round(dist_km,2)) + " km") 
+                elif dist_km < 0.1:
+                    dist_text = "< 100 m"
+                elif dist_km <0.2:
+                    dist_text = (str(round(dist_km*100)*10)+ " m")
+                else:
+                    dist_text = (str(math.ceil(round(dist_km*100)/10)*100)+ " m")
+                walk_time = EstimatedWalkingtime().estimated_walking_time(dist_km)
+                self.lbl_r_dist.config(text=f"📌 Distance: {dist_text}  •  🚶 Est. Walk: {walk_time} min")
+            else:
+                self.lbl_r_dist.config(text="")
+            
+            
+            
+            # Generate visual strings
+            price_str = int(r.price_level) * '$' + (4 - int(r.price_level)) * '  '
+            self.lbl_r_price.config(text=price_str)
+            self.lbl_r_price.pack(side=tk.LEFT, padx=(0, 15))
 
-    listbox.bind("<<ListboxSelect>>", on_restaurant_select)
+            rating_str = int(r.rating) * '★ ' + (5 - int(r.rating)) * '☆ '
+            self.lbl_r_rating.config(text=rating_str)
+            self.lbl_r_rating.pack(side=tk.LEFT, padx=(0, 15))
+            
+            # Show/pack stats
+            if r.cuisines and r.cuisines != '/':
+                self.lbl_r_cuisine.config(text=r.cuisines.upper())
+            else:
+                self.lbl_r_cuisine.config(text="RESTURANT")
+            self.lbl_r_cuisine.pack(side=tk.LEFT, padx=(0, 15))
 
+            # Only show dietary tags if they exist and are not '/'
+            if r.dietary_tags and r.dietary_tags != '/':
+                self.lbl_r_diet.config(text=r.dietary_tags)
+                self.lbl_r_diet.pack(side=tk.LEFT)
+            else:
+                self.lbl_r_diet.pack_forget()
 
-    def block_event(event):
-        return "break"
+            # Show address
+            self.lbl_r_addr.config(text=r.address)
+            self.address_frame.pack(fill=tk.X, pady=(10, 0))
+
+            # Show hours
+            self.lbl_r_hours.config(text=w.textformat(r.weekly_hours))
+            self.hours_frame.pack(fill=tk.X, pady=(10, 0))
+
+            
+            self.current_google_map_url = f"https://www.google.com/maps/dir/?api=1&origin={c.get_campus(self.criteria.get_all().get('campus')).lat},{c.get_campus(self.criteria.get_all().get('campus')).lon}&destination={lat},{lon}&travelmode=walking"
+
+            # Reveal the interactive "Navigate in Google Maps" button embedded securely onto the map overlay
+            self.btn_nav_google.place(relx=1.0, rely=1.0, anchor="se", x=-20, y=-20, width=220, height=40)
     
-    listbox.bind("<Up>", block_event)
-    listbox.bind("<Down>", block_event)
-
-    ts.Button(search_frame, text="Search", command=perform_search, bg="#4CAF50", fg="white").pack(side=ts.LEFT)
-    # Populate the list initially
-    perform_search()
+    def block_event(self, event):
+        return "break"

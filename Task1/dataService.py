@@ -1,7 +1,7 @@
 import os
 import csv
 import search 
-from models import Restaurant as r, WeeklyHours as w
+from models import Restaurant as r, WeeklyHours as w,Location
 
 class RestaurantNode:
     def __init__(self, restaurant_obj):
@@ -28,9 +28,10 @@ class CsvRestaurantRepository():
                 
                 id = int(row[0])
                 name = row[1]
-                location = row[2]
+                address = row[2]
                 lat = float(row[3]) if row[3] else 0.0
                 lon = float(row[4]) if row[4] else 0.0
+                location = Location(lat,lon)
                 cuisines = row[5]
                 dietary_tags = row[7]
                 price_level = 0 if row[6] == '/' else row[6]
@@ -46,7 +47,7 @@ class CsvRestaurantRepository():
                 
                 obj_weekly_hours = w.parse_hours(weekly_hours)
 
-                restaurant_obj = r(id=id, name=name, location=location, lat=lat, lon=lon, cuisines=cuisines, price_level=price_level, rating=rating, dietary_tags=dietary_tags, weekly_hours=obj_weekly_hours, stu_discount=stu_discount, phone=phone, website=website, google_map=google_map)
+                restaurant_obj = r(id=id, name=name, address=address, location=location, cuisines=cuisines, price_level=price_level, rating=rating, dietary_tags=dietary_tags, weekly_hours=obj_weekly_hours, stu_discount=stu_discount, phone=phone, website=website, google_map=google_map)
                 new_node = RestaurantNode(restaurant_obj)
 
                 if not self.head:
@@ -64,5 +65,8 @@ class CsvRestaurantRepository():
     
 
 class SearchService:
+    def __init__(self):
+        self.search_criteria = search.SearchCriteria()
     def searchRestaurants(self, criteria):
+        self.search_criteria = criteria
         pass
