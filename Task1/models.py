@@ -155,20 +155,3 @@ class WeeklyHours:
     #         return False
 
 
-class Restaurant:
-# id,name,address,lat,lon,cuisines,price_level,dietary_tags,rating,hours,stu_discount,phone,wesite1,website, ,google_map
-    def __init__(self, id=None, name=None, location=None, address=None, cuisines=None, price_level=None, rating=None, dietary_tags=None, weekly_hours=None, stu_discount=None, phone=None, website=None, google_map=None):
-        self.id = id
-        self.name = name
-        self.address = address
-        self.location = location
-        self.cuisines = cuisines
-        self.price_level = price_level
-        self.rating = rating
-        self.dietary_tags = dietary_tags
-        self.weekly_hours = weekly_hours
-        self.stu_discount = stu_discount
-        self.phone = phone
-        self.website = website
-        self.google_map = google_map
-

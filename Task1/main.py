@@ -17,15 +17,16 @@ def main():
     repo.read_file()
 
 
-    def show_home():
+    def show_home(criteria=None):
         for view in root.winfo_children():
             view.destroy()
-        home_view = build.HomeView(root, repo, nav_main=show_main)
+        home_view = build.HomeView(root, repo, show_main, criteria)
         home_view.pack(fill=tk.BOTH, expand=True)
-    def show_main(criteria=None):
+    
+    def show_main(criteria):
         for view in root.winfo_children():
             view.destroy()
-        main_view = build.MainView(root, repo, nav_home=show_home, criteria=criteria)
+        main_view = build.MainView(root, repo, show_home, criteria)
         main_view.pack(fill=tk.BOTH, expand=True)
     
     show_home()
