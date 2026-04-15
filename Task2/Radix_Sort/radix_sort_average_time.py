@@ -28,7 +28,7 @@ def radix_timer(test_num):
     print(f"Running time: {total_time}")
     return total_time
 
-def radix_avrange_time():
+def radix_average_time():
     test_time = []
     for i in range(100):
         ran_num = [random.randint(1,10000) for _ in range(100)]
@@ -37,4 +37,4 @@ def radix_avrange_time():
     print("-"*40)
     return sum(test_time)/100
 
-print(f"The avrange running time for radix sort sorting 100 elements is:{radix_avrange_time()}")
+print(f"The avrange running time for radix sort sorting 100 elements is:{radix_average_time()}")
