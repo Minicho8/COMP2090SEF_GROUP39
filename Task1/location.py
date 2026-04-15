@@ -1,6 +1,5 @@
-import math,time
-from datetime import datetime
-
+import math
+from abc import ABC, abstractmethod
 class Location:
     def __init__(self, lat, lon, name=None):
         self.lat = lat
@@ -25,11 +24,11 @@ class Location:
         c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
         distance_km = earth_radius * c
 
-        if start_location == None:
+        if start_location is None:
             print('in check g pt')
             min_d = 0
             gather_points = self.get_gather_points(step)
-            for loc in gather_points: 
+            for loc in gather_points:
                 temp = self.distance_km_from(other_location=loc,start_location=other_location)
                 if min_d == 0:
                     min_d = temp
@@ -80,62 +79,7 @@ class Campus:
     def get_campus(self, campus_name):
         return self.___locations.get(campus_name.upper())
 
-class WeeklyHours:
-    def __init__(self):
-        pass
 
-    def today_time(self):
-        self.today_week = int(datetime.now().strftime("%w"))
-        self.now_time = datetime.now().time()
-        #print(self.today_week,self.now_time)
-
-    @staticmethod
-    def parse_hours(hours_str):
-        hours_obj = {}
-        # Remove 'hours = ' and strip whitespace
-        
-        hours_str = hours_str.replace('–', '-')
-        cleaned_str = hours_str.replace("hours = ", "").strip('"')
-        # split by ; to get days
-        #print(60,cleaned_str)
-        days = cleaned_str.split(';')
-        #print(62,days)
-        for day_range in days:
-            # if '=' not in day_range: continue
-            #print(65,day_range)
-            day, times = day_range.split('=')
-            day = day.strip()
-            times = times.strip()
-            #print(69,day, times)
-            if times.lower() == 'closed':
-                hours_obj[day] = []
-            else:
-                # handle multiple time ranges (/ separated)
-                range_list = []
-                for r in times.split('/'):
-                    start, end = r.split('-')
-                    #print(start.strip(), end.strip())
-                    range_list.append((
-                        datetime.strptime(start.strip(), "%H:%M").time(),
-                        datetime.strptime(end.strip(), "%H:%M").time()
-                    ))
-                hours_obj[day] = range_list
-            #print(83,hours_obj)
-        return hours_obj
-    @staticmethod
-    def textformat(schedule):
-        formatted_output = []
-        for day, intervals in schedule.items():
-            # Capitalize the day (e.g., 'mon' -> 'Mon')
-            day_name = day.capitalize()
-            
-            if not intervals:
-                status = "Closed"
-            else:
-                # Join multiple time slots with a comma (e.g., 07:00-15:00, 16:00-22:00)
-                status = ", ".join([f"{start.strftime('%H:%M')}-{end.strftime('%H:%M')}" for start, end in intervals])
-            formatted_output.append(f"{day_name}: {status}")
-        return "\n".join(formatted_output)
     
     # def restaurant_opening_hours(self):
     #     a = self.hours[self.today_week].split('-')

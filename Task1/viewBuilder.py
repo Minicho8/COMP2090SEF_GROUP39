@@ -1,22 +1,24 @@
-from models import Campus, EstimatedWalkingtime, WeeklyHours as w
 import os
 import math
 import webbrowser
 import tkinter as tk
 import tkintermapview
 from PIL import Image, ImageTk
-from dataService import SearchService, SearchCriteria
+from location import Campus, EstimatedWalkingtime
+from data import WeeklyHours as w
+from search import Search, Criteria
+
 c = Campus()
 
-
 class HomeView(tk.Frame):
+    """Class representing a person"""
     def __init__(self, parent, repo, nav_main, criteria):
         super().__init__(parent)
-        self.search_service = SearchService(repo)
+        self.search_service = Search(repo)
         self.nav_main = nav_main
         self._build_ui()
         if criteria is None:
-            self.criteria = SearchCriteria()
+            self.criteria = Criteria()
         else:
             print("good")
             self.criteria = criteria
@@ -147,7 +149,7 @@ class HomeView(tk.Frame):
         for valD, text in max_d_selectors:
             tk.Radiobutton(max_d_frame, text=text, variable=max_d_var, value=valD, indicatoron=0, bg="#f9f9f9", selectcolor="#d0e8f1", font=("Segoe UI", 10), width=5).pack(side=tk.LEFT, padx=2)
 
-        tk.Label(self.criteria_frame, text="Cuisine/ Food Type:", font=("Segoe UI", 12), bg="#ffffff", fg="#333333").grid(row=2, column=0, padx=10, pady=10, sticky="e")
+        tk.Label(self.criteria_frame, text="Cuisine/ Restaurant Type:", font=("Segoe UI", 12), bg="#ffffff", fg="#333333").grid(row=2, column=0, padx=10, pady=10, sticky="e")
         type_var = tk.StringVar()
         type_selectors = self.search_service.get_field_val_list("type")
         
@@ -258,10 +260,11 @@ class HomeView(tk.Frame):
 class MainView(tk.Frame):
     def __init__(self, parent, repo, nav_home, criteria=None):
         super().__init__(parent)
-        self.search_service = SearchService(repo)
+        self.search_service = Search(repo)
         self.nav_home = nav_home
         self.criteria = criteria
         self.displayed_restaurants = []
+        self.current_google_map_url = ""
 
         self.search_var = tk.StringVar()
         self.dropdown_var = tk.StringVar(value="Settings")
@@ -283,7 +286,7 @@ class MainView(tk.Frame):
         dropdown_menu.config(bg="#f1f1f1")
         dropdown_menu.pack(side=tk.RIGHT)
 
-        # Create a PanedWindow or two side-by-side frames
+        # Create two side-by-side frames
         content_frame = tk.Frame(self)
         content_frame.pack(fill=tk.BOTH, expand=True)
 
@@ -297,20 +300,8 @@ class MainView(tk.Frame):
 
         right_frame = tk.Frame(content_frame)
         right_frame.grid(row=0, column=1, sticky="nsew")
-        
-        '''
-        # Search section
-        search_frame = tk.Frame(left_frame)
-        search_frame.pack(fill=tk.X)
-        tk.Label(search_frame, text="Keyword:").pack(side=tk.LEFT, padx=(0,10))
 
-        search_entry = tk.Entry(search_frame, textvariable=self.search_var, width=30)
-        search_entry.pack(side=tk.LEFT, padx=(0,10))
-
-        tk.Button(search_frame, text="Search", command=self.perform_search, bg="#4CAF50", fg="white").pack(side=tk.LEFT)
-        '''
-
-        # Remaining views - Create a Results Listbox with modernized styling
+        # Results Listbox
         results_frame = tk.Frame(left_frame, bg="#ffffff", bd=1, relief="solid")
         results_frame.pack(fill=tk.BOTH, expand=True, pady=20)
         
@@ -363,10 +354,6 @@ class MainView(tk.Frame):
         self.lbl_r_dist = tk.Label(self.details_frame, text="", font=("Segoe UI", 9, "italic"), bg="#ffffff", fg="#888888", anchor="w", justify="left")
         self.lbl_r_dist.pack(fill=tk.X, pady=(2, 0))
 
-        
-        
-        
-        
         # Horizontal layout for stats (Type badge, Price, Rating, Tags)
         self.stats_frame = tk.Frame(self.details_frame, bg="#ffffff")
         self.stats_frame.pack(fill=tk.X, pady=(10, 5))
@@ -379,7 +366,8 @@ class MainView(tk.Frame):
         self.lbl_r_rating = tk.Label(self.stats_frame, text="", font=("Segoe UI", 11), bg="#ffffff", fg="#f39c12")
         
         # Dietary tags
-        self.lbl_r_diet = tk.Label(self.stats_frame, text="", font=("Segoe UI", 9), bg="#f5f5f5", fg="#666666", padx=5, pady=2)
+        self.diet_tags_frame = tk.Frame(self.stats_frame, bg="#ffffff")
+        #self.lbl_r_diet = tk.Label(self.stats_frame, text="", font=("Segoe UI", 9), bg="#f5f5f5", fg="#666666", padx=5, pady=2) # Keep fallback if needed, but we will mostly use diet_tags_frame
 
         # Address
         self.address_frame = tk.Frame(self.details_frame, bg="#ffffff")
@@ -415,8 +403,6 @@ class MainView(tk.Frame):
 
         # Navigation Button for Google Maps (Hidden by default until a restaurant is selected)
         self.btn_nav_google = tk.Button(self.map_widget, text="Navigate in Google Maps", bg="#4CAF50", fg="white", activebackground="#45a049", activeforeground="white", font=("Segoe UI", 11, "bold"), relief="flat", bd=0, cursor="hand2")
-        # Initialize an attribute to hold the current selected restaurant's url
-        self.current_google_map_url = ""
                 
         self.btn_nav_google.config(command=self.open_google_maps)
 
@@ -446,7 +432,8 @@ class MainView(tk.Frame):
         self.lbl_r_type.pack_forget()
         self.lbl_r_price.pack_forget()
         self.lbl_r_rating.pack_forget()
-        self.lbl_r_diet.pack_forget()
+        self.lbl_r_diet.pack_forget()        
+        self.diet_tags_frame.pack_forget()        
         self.hours_frame.pack_forget()
         self.btn_nav_google.place_forget()
 
@@ -473,16 +460,14 @@ class MainView(tk.Frame):
     def perform_search(self):
         self.listbox.delete(0, tk.END)
         self.displayed_restaurants.clear()
-        
-        query = self.search_var.get().lower()
         results_found = False
         
         for idx, r in enumerate(self.search_service.execute_search(self.criteria)):
-            print('idx:',idx,r.location)
+            print('idx:',idx)
             # Add dynamic visual indicators like emoji or clean formatting
             rating_str = '★' * int(r.rating) if r.rating else 'No Rating'
-            campus_loc = c.get_campus(self.criteria.campus)
-            display_text = f"{idx}  🍽️ {r.name}  |  {r.type.upper()}  |  {rating_str}  ~  {r.location.distance_km_from(campus_loc)}"
+            #campus_loc = c.get_campus(self.criteria.campus)
+            display_text = f" 🍽️ {r.name}  |  {r.type.upper()}  |  {rating_str}"
             print("~"*10)
             self.listbox.insert(tk.END, display_text)
             
@@ -501,7 +486,6 @@ class MainView(tk.Frame):
         selected_indices = self.listbox.curselection()
         if not selected_indices:
             return
-            
         index = selected_indices[0]
         # Make sure don't crash if they click the "No matching..." text
         if index < len(self.displayed_restaurants):
@@ -513,14 +497,9 @@ class MainView(tk.Frame):
             self.map_widget.set_position(lat, lon)
             self.map_widget.set_zoom(17)
             self.map_widget.set_marker(lat, lon, text=r.name)
-
             # Update info card with structured layout
             self.lbl_r_name.config(text=r.name)
-            
-            
             # Distance and Walk Time calculation
-            
-
             campus_loc = c.get_campus(self.criteria.campus)
             dist_km = r.location.distance_km_from(campus_loc)
             
@@ -548,19 +527,25 @@ class MainView(tk.Frame):
             self.lbl_r_rating.config(text=rating_str)
             self.lbl_r_rating.pack(side=tk.LEFT, padx=(0, 15))
             
-            # Show/pack stats
+            #
             if r.type and r.type != '/':
                 self.lbl_r_type.config(text=r.type.upper())
             else:
                 self.lbl_r_type.config(text="RESTURANT")
             self.lbl_r_type.pack(side=tk.LEFT, padx=(0, 15))
 
-            # Only show dietary tags if they exist and are not '/'
-            if r.dietary_tags and r.dietary_tags != '/':
-                self.lbl_r_diet.config(text=r.dietary_tags)
-                self.lbl_r_diet.pack(side=tk.LEFT)
+            #
+            if r.dietary_tags and r.dietary_tags != ['']:
+                print(r.dietary_tags)
+                self.diet_tags_frame.pack(side=tk.LEFT, padx=(5, 0))
+                for label in self.diet_tags_frame.winfo_children():
+                    label.destroy()
+                for tag in r.dietary_tags:
+                    tag = tag.strip()
+                    if tag and tag != '':
+                        tk.Label(self.diet_tags_frame, text=tag, font=("Segoe UI", 9), bg="#f5f5f5", fg="#666666", padx=5, pady=2).pack(side=tk.LEFT, padx=3)
             else:
-                self.lbl_r_diet.pack_forget()
+                self.diet_tags_frame.pack_forget()
 
             # Show address
             self.lbl_r_addr.config(text=r.address)

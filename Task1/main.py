@@ -1,8 +1,6 @@
-
 import tkinter as tk
 import viewBuilder as build
-import models as m
-import dataService
+import data
 
 def main():
     # Initialize the main tkinter window
@@ -13,7 +11,7 @@ def main():
     
 
     # read the restaurant data from CSV file and build the linked list
-    repo = dataService.CsvRestaurantRepository()
+    repo = data.Data()
     repo.read_file()
 
 
