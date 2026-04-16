@@ -10,7 +10,9 @@ Step 2 : open visual studio code
 
 Step 3 : open file / drag the file into visual studio code
 
-Step 4 : click "Run" and "Run Without Debugging" or Ctrl + F5
+Step 4 : click "Run" and "Run Without Debugging" or Ctrl + F5 
+
+Step 5 : noted that you have to download python environment
 
 Finshed the above steps, the output should be shown belowed and the code is shown above.
 
