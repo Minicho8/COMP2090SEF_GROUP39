@@ -95,9 +95,6 @@ class WeeklyHours:
         self.today_week = int(datetime.now().strftime("%w"))
         self.now_time = datetime.now().time()
 
-    def today_time(self):
-        return 
-
     @staticmethod
     def parse_hours(data):
         hours_str = data
@@ -107,7 +104,6 @@ class WeeklyHours:
         cleaned_str = hours_str.replace("hours = ", "").strip('"')
         days = cleaned_str.split(';')
         for day_range in days:
-            print(day_range)
             day, times = day_range.split('=')
             day = day.strip()
             times = times.strip()
@@ -117,7 +113,6 @@ class WeeklyHours:
             else:
                 range_list = []
                 for r in times.split(','):
-                    print(r)
                     start, end = r.split('-')
                     range_list.append((
                         datetime.strptime(start.strip(), "%H:%M").time(),

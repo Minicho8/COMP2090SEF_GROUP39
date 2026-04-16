@@ -1,4 +1,5 @@
 import math
+from datetime import datetime
 from location import Campus
 class Search:
     def __init__(self, repo):
@@ -8,6 +9,7 @@ class Search:
         c = criteria
         results = []
 
+        # restaurant filtering
         for restaurant in self._repo.get_all_restaurants():
 
             if c.query is not None and not c.query == "":
@@ -28,15 +30,43 @@ class Search:
             if c.dietary_tag is not None:
                 if not(c.dietary_tag in restaurant.dietary_tags):
                     continue
-            
-            #"open_time": self.open_time,
-
+            if c.open_time is not None and c.open_time == 'now':
+                today_week = int(datetime.now().strftime("%w"))
+                now_time = datetime.now().time()
+                if not(self.is_open(restaurant.weekly_hours,today_week,now_time)):
+                    continue
             results.append(restaurant)
-        return results
-        #"sort": self.sort,
-        #sort_restaurant(c.sort, self.search_criteria)
-    #def sort_restaurant(self.)
+        
+        #restaurant sorting
+        if c.campus is not None:
+            campus_loc = Campus().get_campus(c.campus)
+            results.sort(key=lambda r: r.location.distance_km_from(campus_loc))
 
+        return results
+
+    @staticmethod
+    def is_open(hours_obj,day_of_week,time):
+        if isinstance(day_of_week, int):
+            days_map = {0: "sun", 1: "mon", 2: "tue", 3: "wed", 4: "thu", 5: "fri", 6: "sat"}
+            day = days_map.get(day_of_week, "")
+        else:
+            day = day_of_week.lower()
+            
+        if day not in hours_obj or not hours_obj[day]:
+            return False
+        
+        if isinstance(time, str):
+            check_time = datetime.strptime(time, "%H:%M").time()
+        else:
+            check_time = time
+        
+        for start, end in hours_obj[day]:
+            # Check if time is within the range
+            if start <= check_time <= end:
+                return True
+                
+        return False
+    
     def get_field_val_list(self, field_name):            
         result_list = []
         for restaurant in self._repo.get_all_restaurants():

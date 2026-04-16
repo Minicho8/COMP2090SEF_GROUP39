@@ -49,7 +49,6 @@ class Location:
         gather_points = [Location(22.317397423147696, 114.1781050172544,'midcross'),
                          Location(22.318306263322874, 114.17556076825,'zone1a'),
                          Location(22.313979928254117, 114.17788097976785,'zone2a')]
-        ''',Location(22.31731238014429, 114.1746904182537,'zone1b')'''
         if len(used_pts) > 0:
             for loc in gather_points:
                 if loc.name in used_pts:
@@ -79,23 +78,5 @@ class Campus:
     def get_campus(self, campus_name):
         return self.___locations.get(campus_name.upper())
 
-
-    
-    # def restaurant_opening_hours(self):
-    #     a = self.hours[self.today_week].split('-')
-    #     opening_hour = datetime.datetime.strptime(a[0],"%H:%M").time()
-    #     closing_hour = datetime.datetime.strptime(a[1],"%H:%M").time()
-    #     today_date = datetime.datetime.now().date()
-    #     closing_datetime = datetime.datetime.combine(today_date, closing_hour)
-    #     last_time = (closing_datetime - datetime.timedelta(minutes=30)).time()
-    #     print(today_date,closing_datetime,last_time)
-    #     print(opening_hour,closing_hour)
-
-    #     if opening_hour <= self.now_time <= closing_hour:
-    #         if self.now_time >= last_time:
-    #             print("near last order / closing")
-    #         return True
-    #     else:
-    #         return False
 
 

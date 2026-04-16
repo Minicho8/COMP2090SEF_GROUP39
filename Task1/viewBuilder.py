@@ -11,20 +11,16 @@ from search import Search, Criteria
 c = Campus()
 
 class HomeView(tk.Frame):
-    """Class representing a person"""
     def __init__(self, parent, repo, nav_main, criteria):
         super().__init__(parent)
         self.search_service = Search(repo)
         self.nav_main = nav_main
         self._build_ui()
-        if criteria is None:
+        if criteria is None or criteria.campus is None:
             self.criteria = Criteria()
         else:
-            print("good")
             self.criteria = criteria
-
             self._change_background(self.criteria.campus)
-
             self.show_search_criteria()
             
         
@@ -183,9 +179,9 @@ class HomeView(tk.Frame):
         dietary_menu.config(font=("Segoe UI", 12), bg="#f9f9f9", relief="solid", bd=0, width=17)
         dietary_menu.grid(row=5, column=1, padx=10, pady=10, sticky="w")
 
-        tk.Label(self.criteria_frame, text="Open Time (HH:MM):", font=("Segoe UI", 12), bg="#ffffff", fg="#333333").grid(row=6, column=0, padx=10, pady=10, sticky="e")
-        time_var = tk.StringVar()
-        tk.Entry(self.criteria_frame, textvariable=time_var, font=("Segoe UI", 12), bg="#f9f9f9", relief="solid", bd=1).grid(row=6, column=1, padx=10, pady=10,sticky="w")
+        tk.Label(self.criteria_frame, text="Currently Open:", font=("Segoe UI", 12), bg="#ffffff", fg="#333333").grid(row=6, column=0, padx=10, pady=10, sticky="e")
+        time_var = tk.StringVar(value="")
+        tk.Checkbutton(self.criteria_frame, text="Yes", variable=time_var, onvalue="now", offvalue="", bg="#ffffff", font=("Segoe UI", 12)).grid(row=6, column=1, padx=10, pady=10, sticky="w")
 
         def fix_search():
             fix_query = query_var.get() if query_var.get() else None
@@ -214,7 +210,6 @@ class HomeView(tk.Frame):
                 else: fix_dietary_tag = dietary_var.get()
 
             fix_otime = time_var.get() if time_var.get() else None  
-
             self.criteria.update(
                 query = fix_query,
                 max_d = fix_max_d,
@@ -276,15 +271,16 @@ class MainView(tk.Frame):
         header_frame = tk.Frame(self)
         header_frame.pack(fill=tk.X, pady=(0, 20))
 
-        left_btn = tk.Button(header_frame, text="Menu", command=lambda: self.nav_home(self.criteria), bg="#2196F3", fg="white")
+        left_btn = tk.Button(header_frame, text="Advance Search", command=lambda: self.nav_home(self.criteria), bg="#2196F3", fg="white")
         left_btn.pack(side=tk.LEFT)
 
-        lbl_title = tk.Label(header_frame, text="Restaurant Search Suggestion System", font=("Helvetica", 18, "bold"))
-        lbl_title.pack(side=tk.LEFT, expand=True)
-
-        dropdown_menu = tk.OptionMenu(header_frame, self.dropdown_var, "Profile", "Preferences", "Logout") #TODO
-        dropdown_menu.config(bg="#f1f1f1")
-        dropdown_menu.pack(side=tk.RIGHT)
+        title = tk.Label(header_frame, text="Restaurant Search Suggestion System", font=("Helvetica", 18, "bold"))
+        title.pack(side=tk.LEFT, expand=True)
+        def change_campus():
+            self.criteria.update(campus=None) 
+            self.nav_home(self.criteria)
+        right_btn = tk.Button(header_frame, text="Change Campus", command=change_campus, bg="#2196F3", fg="white")
+        right_btn.pack(side=tk.RIGHT)
 
         # Create two side-by-side frames
         content_frame = tk.Frame(self)
@@ -346,10 +342,18 @@ class MainView(tk.Frame):
         self.details_frame = tk.Frame(info_frame, bg="#ffffff")
         self.details_frame.pack(fill=tk.BOTH, padx=15, pady=10)
         
-        # Name
-        self.lbl_r_name = tk.Label(self.details_frame, text="Select a restaurant from the list to view its information.", font=("Segoe UI", 16, "bold"), bg="#ffffff", fg="#0066cc", anchor="w")
-        self.lbl_r_name.pack(fill=tk.X, pady=(0, 2))
+        # Title line framework
+        self.title_line_frame = tk.Frame(self.details_frame, bg="#ffffff")
+        self.title_line_frame.pack(fill=tk.X, pady=(0, 2))
 
+        # Name
+        self.lbl_r_name = tk.Label(self.title_line_frame, text="Select a restaurant from the list to view its information.", font=("Segoe UI", 16, "bold"), bg="#ffffff", fg="#0066cc", anchor="w")
+        self.lbl_r_name.pack(side=tk.LEFT)
+
+        # Open Status
+        self.lbl_open_status = tk.Label(self.title_line_frame, text="", font=("Segoe UI", 9, "bold"), padx=5, pady=2)
+        # Hidden by default until a restaurant is selected
+        
         # Distance and Walking Time
         self.lbl_r_dist = tk.Label(self.details_frame, text="", font=("Segoe UI", 9, "italic"), bg="#ffffff", fg="#888888", anchor="w", justify="left")
         self.lbl_r_dist.pack(fill=tk.X, pady=(2, 0))
@@ -407,7 +411,6 @@ class MainView(tk.Frame):
         self.btn_nav_google.config(command=self.open_google_maps)
 
         self.listbox.bind("<<ListboxSelect>>", self.on_restaurant_select)
-        self.listbox.bind()
         self.listbox.bind("<Up>", self.block_event)
         self.listbox.bind("<Down>", self.block_event)
 
@@ -425,6 +428,7 @@ class MainView(tk.Frame):
         
         # Reset labels
         self.lbl_r_name.config(text="Select a restaurant from the list to view its information.")
+        self.lbl_open_status.pack_forget()
         self.lbl_r_addr.config(text="")
         self.current_google_map_url = ""
         
@@ -466,8 +470,7 @@ class MainView(tk.Frame):
             print('idx:',idx)
             # Add dynamic visual indicators like emoji or clean formatting
             rating_str = '★' * int(r.rating) if r.rating else 'No Rating'
-            #campus_loc = c.get_campus(self.criteria.campus)
-            display_text = f" 🍽️ {r.name}  |  {r.type.upper()}  |  {rating_str}"
+            display_text = f" 🍽️ {r.name}  | {r.type.upper()} {rating_str}"
             print("~"*10)
             self.listbox.insert(tk.END, display_text)
             
@@ -499,6 +502,15 @@ class MainView(tk.Frame):
             self.map_widget.set_marker(lat, lon, text=r.name)
             # Update info card with structured layout
             self.lbl_r_name.config(text=r.name)
+            
+            # Check Open Status
+            nt = w()
+            if Search.is_open(r.weekly_hours,nt.today_week,nt.now_time):
+                self.lbl_open_status.config(text="OPEN NOW", bg="#d4edda", fg="#27ae60")
+            else:
+                self.lbl_open_status.config(text="CLOSED", bg="#f8d7da", fg="#dc3545")
+            self.lbl_open_status.pack(side=tk.LEFT, padx=(10, 0))
+
             # Distance and Walk Time calculation
             campus_loc = c.get_campus(self.criteria.campus)
             dist_km = r.location.distance_km_from(campus_loc)
@@ -515,8 +527,6 @@ class MainView(tk.Frame):
                 dist_text = (str(math.ceil(round(dist_km*100)/10)*100)+ " m")
             walk_time = EstimatedWalkingtime().estimated_walking_time(dist_km)
             self.lbl_r_dist.config(text=f"📌 Distance: {dist_text}  •  🚶 Est. Walk: {walk_time} min")
-            
-            
             
             # Generate visual strings
             price_str = int(r.price_level) * '$' + (4 - int(r.price_level)) * '  '
