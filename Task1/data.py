@@ -5,8 +5,7 @@ from location import Location
 
 # Restaurant Object 
 class Restaurant:
-# id,name,address,lat,lon,cuisines,price_level,dietary_tags,rating,hours,stu_discount,phone,wesite1,website, ,google_map
-    def __init__(self, name=None, location=None, address=None, type=None, price_level=None, rating=None, dietary_tags=None, weekly_hours=None, stu_discount=None, phone=None):
+    def __init__(self, name=None, location=None, address=None, type=None, price_level=None, rating=None, dietary_tags=None, weekly_hours=None, stu_discount=None):
         self.name = name
         self.address = address
         self.location = location
@@ -16,9 +15,8 @@ class Restaurant:
         self.dietary_tags = dietary_tags
         self.weekly_hours = weekly_hours
         self.stu_discount = stu_discount
-        self.phone = phone
 
-# Function for Reading the CSV File that contains the Restaurant info
+# Function for Reading the CSV File
 class Data:
     #Inner Class for use in Linked Objects
     class Node:
@@ -26,7 +24,6 @@ class Data:
             self.restaurant = restaurant_obj
             self.next = None
 
-    # Initial Prepare for read file (check path)
     def __init__(self, file_path=None):
         self.head = None
         self.tail = None
@@ -60,7 +57,6 @@ class Data:
         rating = 0 if row[7] == '/' else int(row[7])
         weekly_hours = row[8]
         stu_discount = row[9]
-        phone = row[10]
 
         obj_weekly_hours = WeeklyHours.parse_hours(weekly_hours)
 
@@ -73,9 +69,9 @@ class Data:
             rating = rating, 
             dietary_tags = dietary_tags, 
             weekly_hours = obj_weekly_hours, 
-            stu_discount = stu_discount, 
-            phone = phone
+            stu_discount = stu_discount
         )
+    
     def read_file(self):
         with open(self.file_path, 'r', encoding='utf-8') as file:
             reader = csv.reader(file)
@@ -84,6 +80,7 @@ class Data:
                     continue
                 restaurant_obj = self.__parse_row(row)
                 self.__add_restaurant(restaurant_obj)
+
     def get_all_restaurants(self):
         current = self.head
         while current:
@@ -120,17 +117,17 @@ class WeeklyHours:
                     ))
                 hours_obj[day] = range_list
         return hours_obj
+    
     @staticmethod
     def textformat(schedule):
         formatted_output = []
         for day, intervals in schedule.items():
-            # Capitalize the day (e.g., 'mon' -> 'Mon')
+            # Capitalize the day
             day_name = day.capitalize()
-            
             if not intervals:
                 status = "Closed"
             else:
-                # Join multiple time slots with a comma (e.g., 07:00-15:00, 16:00-22:00)
+                # Join multiple time slots with a comma
                 status = ", ".join([f"{start.strftime('%H:%M')}-{end.strftime('%H:%M')}" for start, end in intervals])
             formatted_output.append(f"{day_name}: {status}")
         return "\n".join(formatted_output)

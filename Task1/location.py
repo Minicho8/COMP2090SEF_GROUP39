@@ -1,5 +1,4 @@
 import math
-from abc import ABC, abstractmethod
 class Location:
     def __init__(self, lat, lon, name=None):
         self.lat = lat
@@ -8,7 +7,6 @@ class Location:
     def distance_km_from(self, other_location: 'Location', start_location: 'Location' = None, step=None) -> float:
         if step is None:
             step = []
-
         earth_radius = 6371.0 
 
         lat_start = self.lat
@@ -43,6 +41,7 @@ class Location:
             else:
                 print('x check inner g pt', distance_km , step)
         return distance_km
+    
     @staticmethod
     def get_gather_points(used_pts):
         remain_points =[]

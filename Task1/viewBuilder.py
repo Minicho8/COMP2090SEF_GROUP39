@@ -23,8 +23,6 @@ class HomeView(tk.Frame):
             self._change_background(self.criteria.campus)
             self.show_search_criteria()
             
-        
-
     def _build_ui(self):
         bg_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "background.png")
         self.original_bg_image = Image.open(bg_path)
@@ -33,14 +31,13 @@ class HomeView(tk.Frame):
 
         self.bind("<Configure>", self._resize_image)
 
-        # Center overlay card frame to make UI stand out from map
         self.card_frame = tk.Frame(self, bg="#ffffff", bd=0, highlightbackground="#cccccc", highlightthickness=1)
         self.card_frame.place(relx=0.5, rely=0.5, anchor="center")
 
         title_label = tk.Label(self.card_frame, text="Welcome to Restaurant Search", font=("Segoe UI", 24, "bold"), fg="#333333", bg="#ffffff")
         title_label.pack(pady=(40, 30), padx=40)
 
-        # Campus selection section (shown first)
+        # Campus selection section
         self.campus_selection_frame = tk.Frame(self.card_frame, bg="#ffffff")
         self.campus_selection_frame.pack(pady=(0, 40), padx=40)
         
@@ -49,17 +46,14 @@ class HomeView(tk.Frame):
         self.campus_var = tk.StringVar(value="Select Campus")
         campus_options = ["MC", "IOH", "JCC", "HMT_PLAZA"]
         
-        # Style the dropdown slightly
         dropdown = tk.OptionMenu(self.campus_selection_frame, self.campus_var, *campus_options)
         dropdown.config(font=("Segoe UI", 11), bg="#f9f9f9", width=20, bd=1, relief="solid", activebackground="#eeeeee")
         dropdown.pack(pady=(0, 20))
-        
-        
 
         btn_confirm_campus = tk.Button(self.campus_selection_frame, text="Confirm", font=("Segoe UI", 12, "bold"), bg="#27ae60", fg="white", activebackground="#219150", activeforeground="white", bd=0, cursor="hand2", width=15, command=self._confirm_campus)
         btn_confirm_campus.pack()
         
-        # Primary navigation buttons (created but NOT packed yet)
+        # Primary navigation buttons
         self.btn_search = tk.Button(self.card_frame, text="Search for Restaurants", font=("Segoe UI", 13, "bold"), width=25, height=2, bg="#0066cc", fg="white", activebackground="#004080", activeforeground="white", bd=0, cursor="hand2", command=self.show_search_criteria)
         self.btn_all = tk.Button(self.card_frame, text="Show All Restaurants", font=("Segoe UI", 13, "bold"), width=25, height=2, bg="#f39c12", fg="white", activebackground="#e67e22", activeforeground="white", bd=0, cursor="hand2", command=lambda: self.nav_main(self.criteria))
         
@@ -68,16 +62,13 @@ class HomeView(tk.Frame):
 
     def _confirm_campus(self):
         if self.campus_var.get() and self.campus_var.get() != "Select Campus":
-            # Update the instance created in __init__
             self.criteria.update(campus=self.campus_var.get())
             campus_val = self.criteria.campus
-
-            print(campus_val)
-            
             self._change_background(campus_val)
             
             # Hide the selection section
             self.campus_selection_frame.pack_forget()
+
             # Show the primary navigation buttons
             self.btn_search.pack(pady=(0, 15), padx=40)
             self.btn_all.pack(pady=(0, 15), padx=40)
@@ -87,7 +78,6 @@ class HomeView(tk.Frame):
         bg_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), f"background{campus_name}.png")
         try:
             self.original_bg_image = Image.open(bg_path)
-            # Force a resize event to apply the new image immediately
             e = tk.Event()
             e.widget = self
             e.width = self.winfo_width()
@@ -102,7 +92,7 @@ class HomeView(tk.Frame):
         self.btn_all.pack_forget()
         self.btn_back_to_campus.pack_forget()
 
-        # Reset background back to original default
+        # Reset background back to original background image
         bg_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "background.png")
         try:
             self.original_bg_image = Image.open(bg_path)
@@ -118,7 +108,6 @@ class HomeView(tk.Frame):
         self.campus_selection_frame.pack(pady=(0, 40), padx=40)
 
     def _resize_image(self, event):
-        # We only want to resize if the container frame itself triggered the event
         if event.widget == self and event.width > 50 and event.height > 50:
             resized_image = self.original_bg_image.resize((event.width, event.height), Image.Resampling.LANCZOS)
             self.bg_image = ImageTk.PhotoImage(resized_image)
@@ -129,14 +118,17 @@ class HomeView(tk.Frame):
         self.btn_search.pack_forget()
         self.btn_all.pack_forget()
         self.btn_back_to_campus.pack_forget()
-
+        
+        # Search form frame
         self.criteria_frame = tk.Frame(self.card_frame, bg="#ffffff")
         self.criteria_frame.pack(pady=(0, 40), padx=40)
 
+        # restaurant keyword search input
         tk.Label(self.criteria_frame, text="Restaurant Name (Optional):", font=("Segoe UI", 12), bg="#ffffff", fg="#333333").grid(row=0, column=0, padx=10, pady=10, sticky="e")
         query_var = tk.StringVar()
         tk.Entry(self.criteria_frame, textvariable=query_var, font=("Segoe UI", 12), bg="#f9f9f9", relief="solid", bd=1, width=17).grid(row=0, column=1, padx=10, pady=10,sticky="w")
 
+        # Maximum distance input
         tk.Label(self.criteria_frame, text="Max Distance:", font=("Segoe UI", 12), bg="#ffffff", fg="#333333").grid(row=1, column=0, padx=10, pady=10, sticky="e")
         max_d_var = tk.StringVar()
         max_d_frame = tk.Frame(self.criteria_frame, bg="#ffffff")
@@ -145,6 +137,7 @@ class HomeView(tk.Frame):
         for valD, text in max_d_selectors:
             tk.Radiobutton(max_d_frame, text=text, variable=max_d_var, value=valD, indicatoron=0, bg="#f9f9f9", selectcolor="#d0e8f1", font=("Segoe UI", 10), width=5).pack(side=tk.LEFT, padx=2)
 
+        # Restaurant type input
         tk.Label(self.criteria_frame, text="Cuisine/ Restaurant Type:", font=("Segoe UI", 12), bg="#ffffff", fg="#333333").grid(row=2, column=0, padx=10, pady=10, sticky="e")
         type_var = tk.StringVar()
         type_selectors = self.search_service.get_field_val_list("type")
@@ -153,6 +146,7 @@ class HomeView(tk.Frame):
         type_menu.config(font=("Segoe UI", 12), bg="#f9f9f9", relief="solid", bd=0, width=17)
         type_menu.grid(row=2, column=1, padx=10, pady=10, sticky="w")
 
+        # Price range input
         tk.Label(self.criteria_frame, text="Price Range:", font=("Segoe UI", 12), bg="#ffffff", fg="#333333").grid(row=3, column=0, padx=10, pady=10, sticky="e")
         price_var = tk.StringVar()
         price_frame = tk.Frame(self.criteria_frame, bg="#ffffff")
@@ -171,6 +165,7 @@ class HomeView(tk.Frame):
         rating_menu.config(font=("Segoe UI", 12), bg="#f9f9f9", relief="solid", bd=0, width=17)
         rating_menu.grid(row=4, column=1, padx=10, pady=10, sticky="w")
 
+        # Dietary Tag input
         tk.Label(self.criteria_frame, text="Dietary Tag:", font=("Segoe UI", 12), bg="#ffffff", fg="#333333").grid(row=5, column=0, padx=10, pady=10, sticky="e")
         dietary_var = tk.StringVar()
         dietary_selectors = self.search_service.get_field_val_list("dietary_tags")
@@ -179,6 +174,7 @@ class HomeView(tk.Frame):
         dietary_menu.config(font=("Segoe UI", 12), bg="#f9f9f9", relief="solid", bd=0, width=17)
         dietary_menu.grid(row=5, column=1, padx=10, pady=10, sticky="w")
 
+        #Opening status input
         tk.Label(self.criteria_frame, text="Currently Open:", font=("Segoe UI", 12), bg="#ffffff", fg="#333333").grid(row=6, column=0, padx=10, pady=10, sticky="e")
         time_var = tk.StringVar(value="")
         tk.Checkbutton(self.criteria_frame, text="Yes", variable=time_var, onvalue="now", offvalue="", bg="#ffffff", font=("Segoe UI", 12)).grid(row=6, column=1, padx=10, pady=10, sticky="w")
@@ -220,7 +216,6 @@ class HomeView(tk.Frame):
                 open_time = fix_otime
             )
             
-            #print(self.criteria)
             self.nav_main(self.criteria)
 
         def reset():
@@ -251,7 +246,6 @@ class HomeView(tk.Frame):
 
         reset()
 
-    
 class MainView(tk.Frame):
     def __init__(self, parent, repo, nav_home, criteria=None):
         super().__init__(parent)
@@ -267,7 +261,7 @@ class MainView(tk.Frame):
         self._build_ui()
         
     def _build_ui(self):
-        # Add a top label (Header) with left button and right dropdown
+        # top Header
         header_frame = tk.Frame(self)
         header_frame.pack(fill=tk.X, pady=(0, 20))
 
@@ -282,11 +276,10 @@ class MainView(tk.Frame):
         right_btn = tk.Button(header_frame, text="Change Campus", command=change_campus, bg="#2196F3", fg="white")
         right_btn.pack(side=tk.RIGHT)
 
-        # Create two side-by-side frames
+        # side-by-side frames
         content_frame = tk.Frame(self)
         content_frame.pack(fill=tk.BOTH, expand=True)
 
-        # Configure columns to have equal width by using the same "uniform" group
         content_frame.columnconfigure(0, weight=1,uniform='half')
         content_frame.columnconfigure(1, weight=1,uniform='half')
         content_frame.rowconfigure(0, weight=1)
@@ -338,7 +331,6 @@ class MainView(tk.Frame):
         deselect_btn = tk.Button(info_header_frame, text="✖ Deselect", command=self.cancel_selection, bg="#e0e0e0", activebackground="#cccccc", relief="flat", bd=0, cursor="hand2", padx=8, pady=2)
         deselect_btn.pack(side=tk.RIGHT, padx=10, pady=8)
 
-        # Better detailed layout
         self.details_frame = tk.Frame(info_frame, bg="#ffffff")
         self.details_frame.pack(fill=tk.BOTH, padx=15, pady=10)
         
@@ -352,7 +344,6 @@ class MainView(tk.Frame):
 
         # Open Status
         self.lbl_open_status = tk.Label(self.title_line_frame, text="", font=("Segoe UI", 9, "bold"), padx=5, pady=2)
-        # Hidden by default until a restaurant is selected
         
         # Distance and Walking Time
         self.lbl_r_dist = tk.Label(self.details_frame, text="", font=("Segoe UI", 9, "italic"), bg="#ffffff", fg="#888888", anchor="w", justify="left")
@@ -391,17 +382,18 @@ class MainView(tk.Frame):
         self.lbl_r_hours = tk.Label(self.hours_frame, text="", font=("Consolas", 10), bg="#ffffff", fg="#444444", anchor="nw", justify=tk.LEFT)
         self.lbl_r_hours.grid(row=0, column=1, sticky="nw")
 
+        # Map view
         self.map_widget = tkintermapview.TkinterMapView(right_frame, width=400, height=400, corner_radius=0)
         self.map_widget.set_tile_server("https://mt0.google.com/vt/lyrs=m&hl=en&x={x}&y={y}&z={z}&s=Ga", max_zoom=22)
         self.map_widget.pack(fill=tk.BOTH, expand=True)
 
-        # Default to HKMU Ho Man Tin Campuses, adjust zoom
+        # Zoom view default to center of HKMU Ho Man Tin Campuses, adjust zoom
         o_lat = c.get_campus("MC").lat + c.get_campus("IOH").lat + c.get_campus("JCC").lat + c.get_campus("HMT_PLAZA").lat
         o_lon = c.get_campus("MC").lon + c.get_campus("IOH").lon + c.get_campus("JCC").lon + c.get_campus("HMT_PLAZA").lon
         self.map_widget.set_position(o_lat / 4, o_lon / 4)
         self.map_widget.set_zoom(17)
 
-        # Create Reload Button and place it hovering on the top right
+        # Reload Button 
         reload_btn = tk.Button(self.map_widget, text="↻ Reload Map", command=self.reload_map, bg="white", activebackground="#f0f0f0", relief=tk.RAISED, bd=1)
         reload_btn.place(relx=1.0, anchor=tk.NE, x=-10, y=10)
 
@@ -414,8 +406,7 @@ class MainView(tk.Frame):
         self.listbox.bind("<Up>", self.block_event)
         self.listbox.bind("<Down>", self.block_event)
 
-        
-        # Populate the list initially
+        # load the result list
         self.perform_search()
 
     def open_google_maps(self):
@@ -430,29 +421,30 @@ class MainView(tk.Frame):
         self.lbl_r_name.config(text="Select a restaurant from the list to view its information.")
         self.lbl_open_status.pack_forget()
         self.lbl_r_addr.config(text="")
+        self.lbl_r_dist.config(text="")
         self.current_google_map_url = ""
         
         # Hide dynamic blocks
         self.lbl_r_type.pack_forget()
         self.lbl_r_price.pack_forget()
         self.lbl_r_rating.pack_forget()
-        self.lbl_r_diet.pack_forget()        
         self.diet_tags_frame.pack_forget()        
         self.hours_frame.pack_forget()
+        self.address_frame.pack_forget()
         self.btn_nav_google.place_forget()
 
     # Reload Map Function
     def reload_map(self):
         selected_indices = self.listbox.curselection()
         if selected_indices and selected_indices[0] < len(self.displayed_restaurants):
-            # A restaurant is currently selected, center map on it instead of resetting everything
+            # A restaurant is currently selected
             r = self.displayed_restaurants[selected_indices[0]]
             self.map_widget.delete_all_marker()
             self.map_widget.set_position(r.location.lat, r.location.lon)
             self.map_widget.set_zoom(17)
             self.map_widget.set_marker(r.location.lat, r.location.lon, text=r.name)
         else:
-            # No restaurant selected, do a full map reset to default coordinates
+            # No restaurant selected
             self.map_widget.delete_all_marker()
             o_lat = c.get_campus("MC").lat + c.get_campus("IOH").lat + c.get_campus("JCC").lat + c.get_campus("HMT_PLAZA").lat
             o_lon = c.get_campus("MC").lon + c.get_campus("IOH").lon + c.get_campus("JCC").lon + c.get_campus("HMT_PLAZA").lon
@@ -460,37 +452,31 @@ class MainView(tk.Frame):
             self.map_widget.set_position(o_lat / 4, o_lon / 4)
             self.map_widget.set_zoom(17)
 
-    # Define the search function
+    # Perform the search function
     def perform_search(self):
         self.listbox.delete(0, tk.END)
         self.displayed_restaurants.clear()
         results_found = False
         
         for idx, r in enumerate(self.search_service.execute_search(self.criteria)):
-            print('idx:',idx)
-            # Add dynamic visual indicators like emoji or clean formatting
             rating_str = '★' * int(r.rating) if r.rating else 'No Rating'
             display_text = f" 🍽️ {r.name}  | {r.type.upper()} {rating_str}"
-            print("~"*10)
             self.listbox.insert(tk.END, display_text)
-            
-            # Alternate row colors for better readability
+
             bg_color = "#ffffff" if idx % 2 == 0 else "#f9f9f9"
             self.listbox.itemconfig(tk.END, {'bg': bg_color})
             
             self.displayed_restaurants.append(r)
             results_found = True
-                
         if not results_found:
             self.listbox.insert(tk.END, "  🔍 No matching restaurants found for your query.")
             self.listbox.itemconfig(tk.END, {'fg': '#888888'})
     def on_restaurant_select(self,event):
-        # Find which item is clicked
+        # Get selected item
         selected_indices = self.listbox.curselection()
         if not selected_indices:
             return
         index = selected_indices[0]
-        # Make sure don't crash if they click the "No matching..." text
         if index < len(self.displayed_restaurants):
             r = self.displayed_restaurants[index]
             lat = r.location.lat
@@ -500,7 +486,7 @@ class MainView(tk.Frame):
             self.map_widget.set_position(lat, lon)
             self.map_widget.set_zoom(17)
             self.map_widget.set_marker(lat, lon, text=r.name)
-            # Update info card with structured layout
+            # Update info card
             self.lbl_r_name.config(text=r.name)
             
             # Check Open Status
@@ -514,9 +500,7 @@ class MainView(tk.Frame):
             # Distance and Walk Time calculation
             campus_loc = c.get_campus(self.criteria.campus)
             dist_km = r.location.distance_km_from(campus_loc)
-            
-            print(self.criteria.campus,dist_km)
-            print("~"*10)
+
             if dist_km >= 1:
                 dist_text = (str(round(dist_km,2)) + " km") 
             elif dist_km < 0.1:
@@ -528,7 +512,7 @@ class MainView(tk.Frame):
             walk_time = EstimatedWalkingtime().estimated_walking_time(dist_km)
             self.lbl_r_dist.config(text=f"📌 Distance: {dist_text}  •  🚶 Est. Walk: {walk_time} min")
             
-            # Generate visual strings
+            # Price, rating, ...,dietary tags
             price_str = int(r.price_level) * '$' + (4 - int(r.price_level)) * '  '
             self.lbl_r_price.config(text=price_str)
             self.lbl_r_price.pack(side=tk.LEFT, padx=(0, 15))
@@ -537,14 +521,12 @@ class MainView(tk.Frame):
             self.lbl_r_rating.config(text=rating_str)
             self.lbl_r_rating.pack(side=tk.LEFT, padx=(0, 15))
             
-            #
             if r.type and r.type != '/':
                 self.lbl_r_type.config(text=r.type.upper())
             else:
                 self.lbl_r_type.config(text="RESTURANT")
             self.lbl_r_type.pack(side=tk.LEFT, padx=(0, 15))
 
-            #
             if r.dietary_tags and r.dietary_tags != ['']:
                 print(r.dietary_tags)
                 self.diet_tags_frame.pack(side=tk.LEFT, padx=(5, 0))
@@ -565,11 +547,9 @@ class MainView(tk.Frame):
             self.lbl_r_hours.config(text=w.textformat(r.weekly_hours))
             self.hours_frame.pack(fill=tk.X, pady=(10, 0))
 
-            
             self.current_google_map_url = f"https://www.google.com/maps/dir/?api=1&origin={c.get_campus(self.criteria.campus).lat},{c.get_campus(self.criteria.campus).lon}&destination={lat},{lon}&travelmode=walking"
 
-            # Reveal the interactive "Navigate in Google Maps" button embedded securely onto the map overlay
+            # Show "Navigate in Google Maps" button
             self.btn_nav_google.place(relx=1.0, rely=1.0, anchor="se", x=-20, y=-20, width=220, height=40)
-    
     def block_event(self, event):
         return "break"
