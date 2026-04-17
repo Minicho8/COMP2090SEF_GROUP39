@@ -8,6 +8,8 @@ https://github.com/user-attachments/assets/dcd55ce1-6785-4baa-9446-11692cddf2d3
 
 - **Task 2 Video:**
 
+https://github.com/user-attachments/assets/0d64d712-1b84-499f-85f0-57f1e64a3750
+
 ## Prerequisites & Version
 - **Python 3** is highly recommended (preferably the latest version).
 - You will need to install the following external libraries before running the tasks:
