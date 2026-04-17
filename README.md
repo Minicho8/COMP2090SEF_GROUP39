@@ -2,12 +2,21 @@
 
 ## Introduction Videos
 Please review our video demonstrations for a complete overview of the project's features and implementation:
-- **Task 1 Video:** [Insert Task 1 Video Link Here]
-- **Task 2 Video:** [Insert Task 2 Video Link Here]
+- **Task 1 Video:**
+
+https://github.com/user-attachments/assets/5cfac617-615f-4aa6-b25b-9eff934522c3
+
+- **Task 2 Video:**
+
+
 
 ## Prerequisites & Version
 - **Python 3** is highly recommended (preferably the latest version).
 - You will need to install the following external libraries before running the tasks:
+
+
+
+
   ```bash
   pip install tkintermapview Pillow
   ```
