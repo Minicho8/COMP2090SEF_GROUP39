@@ -9,7 +9,7 @@ def counting_sort(array,exp):
         print(f"The digit of {num} in index {exp + 1} is {digit_value}.")
         bucket[digit_value].append(num)
         print("\t",bucket)
-        time.sleep(1)
+        time.sleep(0.25)
 
     print("-"*50)
     array.clear()                                           #clear the unsorted array 
@@ -17,6 +17,7 @@ def counting_sort(array,exp):
         array.extend(num)
     print(f"Current list: {array}")
     print("-"*50)
+    time.sleep(1)
 
 def radix_sort(array):
     if not array:                                           #stop the process if array is empty
@@ -30,5 +31,5 @@ def radix_sort(array):
 test_num = [3009,9873,1672,8080,2981,3,5015,837,318,936,54,1935,440,3552,996,93,579]
 print("Unorted list: ",test_num)
 print("-"*50)
-time.sleep(2)
+time.sleep(0.25)
 print("Sorted result: ", radix_sort(test_num))
