@@ -1,7 +1,7 @@
 # COMP2090SEF - Group 39
 
 ## Introduction Videos
-Please review our video demonstrations for a complete overview of the project's features and implementation:
+Please review our video demonstrations for a complete overview of the project:
 - **Task 1 Video:**
 
 https://github.com/user-attachments/assets/dcd55ce1-6785-4baa-9446-11692cddf2d3
