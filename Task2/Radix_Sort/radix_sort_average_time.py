@@ -36,5 +36,4 @@ def radix_average_time():
         test_time.append(radix_timer(ran_num))
     print("-"*40)
     return sum(test_time)/100
-
-print(f"The avrange running time for radix sort sorting 100 elements is:{radix_average_time()}")
+print(f"The avrange running time for radix sort sorting 100 elements is: {radix_average_time()} sec.")
