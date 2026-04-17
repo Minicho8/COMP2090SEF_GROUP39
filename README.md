@@ -4,11 +4,9 @@
 Please review our video demonstrations for a complete overview of the project's features and implementation:
 - **Task 1 Video:**
 
-https://github.com/user-attachments/assets/5cfac617-615f-4aa6-b25b-9eff934522c3
+https://github.com/user-attachments/assets/dcd55ce1-6785-4baa-9446-11692cddf2d3
 
 - **Task 2 Video:**
-
-
 
 ## Prerequisites & Version
 - **Python 3** is highly recommended (preferably the latest version).
